@@ -12,7 +12,7 @@ class AuditControllerTest extends TestCase
 
     public function test_audit_page_loads(): void
     {
-        $response = $this->get('/audit');
+        $response = $this->get('/');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Audit/Index'));
