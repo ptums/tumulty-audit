@@ -1,0 +1,49 @@
+# ============================================================
+# Stage 1: Build frontend assets
+# ============================================================
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# ============================================================
+# Stage 2: PHP-FPM application
+# ============================================================
+FROM php:8.4-fpm AS app
+
+RUN apt-get update && apt-get install -y \
+    git curl libpng-dev libonig-dev libxml2-dev libpq-dev zip unzip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd opcache
+
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+# Install PHP deps first (separate layer — only rebuilds when composer.json changes)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy app code and built frontend assets
+COPY . .
+COPY --from=frontend /app/public/build ./public/build
+
+RUN composer dump-autoload --no-dev --optimize
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+EXPOSE 9000
+CMD ["php-fpm"]
+
+# ============================================================
+# Stage 3: Nginx — serves static assets, proxies PHP to app
+# ============================================================
+FROM nginx:alpine AS webserver
+COPY docker/nginx/prod.conf /etc/nginx/conf.d/default.conf
+# Copy public/ from build context (index.php, favicon, etc.)
+COPY public/ /var/www/public/
+# Overlay Vite-built assets from the frontend stage
+COPY --from=frontend /app/public/build /var/www/public/build

@@ -1,0 +1,48 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: SSH deploy to DigitalOcean
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ENV_PRODUCTION: ${{ secrets.ENV_PRODUCTION }}
+        with:
+          host: 45.55.51.123
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ENV_PRODUCTION
+          script: |
+            set -e
+
+            cd /var/www/tumulty-audit
+
+            git pull origin main
+
+            # Write .env from GitHub secret (never echoed; passed via envs:)
+            printf '%s' "$ENV_PRODUCTION" > .env
+
+            # Build images (uses Docker layer cache — only rebuilds changed layers)
+            docker compose -f docker-compose.prod.yml build
+
+            # Replace running containers with zero-restart gap
+            docker compose -f docker-compose.prod.yml up -d
+
+            # Run migrations (--force required for non-interactive prod)
+            docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+
+            # Cache config, routes, views, and events
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize
+
+            # Restart queue workers to pick up new code
+            docker compose -f docker-compose.prod.yml exec -T app php artisan queue:restart
+
+            # Remove dangling images from previous builds
+            docker image prune -f

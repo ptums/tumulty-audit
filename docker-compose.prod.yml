@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+      target: app
+    container_name: tumulty_audit_app
+    restart: unless-stopped
+    volumes:
+      - ./.env:/var/www/.env:ro
+      - storage:/var/www/storage
+    networks:
+      - tumulty_audit
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+      target: webserver
+    container_name: tumulty_audit_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    networks:
+      - tumulty_audit
+    depends_on:
+      - app
+
+  db:
+    image: postgres:17-alpine
+    container_name: tumulty_audit_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-tumulty_audit}
+      POSTGRES_USER: ${DB_USERNAME:-sail}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - tumulty_audit
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-sail} -d ${DB_DATABASE:-tumulty_audit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  tumulty_audit:
+    driver: bridge
+
+volumes:
+  storage:
+  pgdata:
