@@ -109,7 +109,17 @@ export default function SubmissionDetail({ submission }) {
                             </div>
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-0.5">Score</p>
-                                <p className="text-gray-400">— (pending AI)</p>
+                                {submission.score != null ? (
+                                    <p className="text-gray-800 font-semibold">
+                                        {submission.score}
+                                        <span className="ml-1.5 text-xs font-bold bg-emerald-100 text-emerald-700 rounded px-1.5 py-0.5">{submission.grade}</span>
+                                        {submission.score_label && (
+                                            <span className="block text-xs text-gray-400 font-normal mt-0.5">{submission.score_label}</span>
+                                        )}
+                                    </p>
+                                ) : (
+                                    <p className="text-gray-400 text-sm">Scoring in progress…</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -139,8 +149,41 @@ export default function SubmissionDetail({ submission }) {
                     ))}
                 </div>
 
-                {/* Right column — notes + HubSpot */}
+                {/* Right column — score breakdown + notes + HubSpot */}
                 <div className="w-full lg:w-80 space-y-4">
+
+                    {/* Score breakdown */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-6 py-5">
+                        <h2
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                            className="text-lg font-bold text-emerald-800 mb-3"
+                        >
+                            Score
+                        </h2>
+                        {submission.score != null ? (
+                            <>
+                                <div className="flex items-end gap-3 mb-4">
+                                    <span className="text-4xl font-extrabold text-emerald-700">{submission.score}</span>
+                                    <span className="text-lg font-bold bg-emerald-100 text-emerald-700 rounded px-2 py-0.5 mb-1">{submission.grade}</span>
+                                </div>
+                                {submission.score_label && (
+                                    <p className="text-sm text-gray-500 mb-4">{submission.score_label}</p>
+                                )}
+                                {submission.score_breakdown && (
+                                    <div className="space-y-2 text-sm">
+                                        {Object.entries(submission.score_breakdown).map(([key, val]) => (
+                                            <div key={key} className="flex justify-between items-center">
+                                                <span className="capitalize text-gray-500">{key.replace(/_/g, ' ')}</span>
+                                                <span className="font-semibold text-gray-700">{val}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-sm text-gray-400">Scoring in progress…</p>
+                        )}
+                    </div>
 
                     {/* Notes */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-6 py-5">

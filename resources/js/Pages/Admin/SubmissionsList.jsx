@@ -44,7 +44,16 @@ export default function SubmissionsList({ submissions }) {
                                     <td className="px-6 py-3 font-medium text-gray-800">{s.first_name}</td>
                                     <td className="px-6 py-3 text-gray-600">{s.company_name}</td>
                                     <td className="px-6 py-3 text-gray-600">{s.email}</td>
-                                    <td className="px-6 py-3 text-gray-400">—</td>
+                                    <td className="px-6 py-3">
+                                        {s.score != null ? (
+                                            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700">
+                                                <span>{s.score}</span>
+                                                <span className="text-xs font-bold bg-emerald-100 text-emerald-700 rounded px-1.5 py-0.5">{s.grade}</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-300 text-xs">pending…</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-3 text-gray-400 whitespace-nowrap">
                                         {new Date(s.created_at).toLocaleDateString('en-GB', {
                                             day: 'numeric', month: 'short', year: 'numeric',

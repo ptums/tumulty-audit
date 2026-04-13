@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAuditResponseRequest;
+use App\Jobs\ScoreAuditResponse;
 use App\Models\AuditResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,7 +18,9 @@ class AuditController extends Controller
 
     public function store(StoreAuditResponseRequest $request): RedirectResponse
     {
-        AuditResponse::create($request->validated());
+        $response = AuditResponse::create($request->validated());
+
+        ScoreAuditResponse::dispatch($response);
 
         return redirect()->route('audit.thankyou');
     }

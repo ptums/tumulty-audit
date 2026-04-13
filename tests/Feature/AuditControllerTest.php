@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ScoreAuditResponse;
 use App\Models\AuditResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class AuditControllerTest extends TestCase
@@ -28,6 +31,8 @@ class AuditControllerTest extends TestCase
 
     public function test_valid_submission_stores_response_and_redirects(): void
     {
+        Queue::fake();
+
         $response = $this->post('/audit', $this->validPayload());
 
         $response->assertRedirect('/audit/thank-you');
@@ -36,6 +41,40 @@ class AuditControllerTest extends TestCase
             'first_name'   => 'Jane',
             'company_name' => 'Acme Inc.',
         ]);
+    }
+
+    public function test_submission_dispatches_score_job(): void
+    {
+        Queue::fake();
+
+        $this->post('/audit', $this->validPayload());
+
+        Queue::assertPushed(ScoreAuditResponse::class, function ($job) {
+            return $job->auditResponse->email === 'jane@example.com';
+        });
+    }
+
+    public function test_score_job_updates_record_from_api_response(): void
+    {
+        Http::fake([
+            'tumulty-score-api.peter-686.workers.dev/*' => Http::response([
+                'score'     => 74,
+                'grade'     => 'B',
+                'label'     => 'Strong candidate',
+                'breakdown' => ['team' => 18, 'pain_points' => 33, 'goals' => 23],
+            ], 200),
+        ]);
+
+        $auditResponse = AuditResponse::create($this->validPayload());
+
+        (new ScoreAuditResponse($auditResponse))->handle();
+
+        $auditResponse->refresh();
+
+        $this->assertSame(74, $auditResponse->score);
+        $this->assertSame('B', $auditResponse->grade);
+        $this->assertSame('Strong candidate', $auditResponse->score_label);
+        $this->assertSame(['team' => 18, 'pain_points' => 33, 'goals' => 23], $auditResponse->score_breakdown);
     }
 
     public function test_submission_is_soft_deletable(): void

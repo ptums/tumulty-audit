@@ -29,9 +29,15 @@ class AuditResponse extends Model
         'email',
         'notes',
         'integration_status',
+        'score',
+        'grade',
+        'score_label',
+        'score_breakdown',
     ];
 
     protected $casts = [
         'manual_work_scale' => 'integer',
+        'score'             => 'integer',
+        'score_breakdown'   => 'array',
     ];
 }
