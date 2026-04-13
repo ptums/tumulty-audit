@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PREFIX
         );
+        $middleware->redirectGuestsTo('/admin/login');
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);

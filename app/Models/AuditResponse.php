@@ -27,6 +27,8 @@ class AuditResponse extends Model
         'first_name',
         'company_name',
         'email',
+        'notes',
+        'integration_status',
     ];
 
     protected $casts = [
