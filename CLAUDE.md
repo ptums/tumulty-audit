@@ -117,3 +117,5 @@ PHP config overrides are in `docker/php/local.ini`. Nginx config is in `docker/n
 ### Environment
 
 Copy `.env.example` to `.env` and generate a key (`php artisan key:generate`). The example is pre-configured for PostgreSQL with Docker service names (`DB_HOST=db`). When running outside Docker, change `DB_HOST` to `127.0.0.1`.
+
+## Current Status

@@ -20,30 +20,29 @@ class ScoreAuditResponse implements ShouldQueue
 
     public function handle(): void
     {
-        $response = Http::timeout(15)->post(
-            'https://tumulty-score-api.peter-686.workers.dev/score',
-            [
-                // Step 1 — Team
-                'team_size'           => $this->auditResponse->team_size,
-                'same_features'       => $this->auditResponse->same_features,
-                'team_embraces_tools' => $this->auditResponse->team_embraces_tools,
-                'asks_for_tools'      => $this->auditResponse->asks_for_tools,
-                'tech_decision_owner' => $this->auditResponse->tech_decision_owner,
+        $baseUrl = rtrim(env('API_BASE_URL', 'https://tumulty-score-api.peter-686.workers.dev'), '/');
 
-                // Step 2 — Pain Points
-                'manual_work_scale'       => $this->auditResponse->manual_work_scale,
-                'manual_data_entry_hours' => $this->auditResponse->manual_data_entry_hours,
-                'lost_leads'              => $this->auditResponse->lost_leads,
-                'paying_no_results'       => $this->auditResponse->paying_no_results,
+        $response = Http::timeout(15)->post("{$baseUrl}/score", [
+            // Step 1 — Team
+            'team_size'       => $this->auditResponse->team_size,
+            'unused_features' => $this->auditResponse->same_features,
+            'tool_adoption'   => $this->auditResponse->team_embraces_tools,
+            'asks_for_tools'  => $this->auditResponse->asks_for_tools,
+            'tech_owner'      => $this->auditResponse->tech_decision_owner,
 
-                // Step 3 — Goals
-                'primary_goal'       => $this->auditResponse->primary_goal,
-                'success_vision'     => $this->auditResponse->success_vision,
-                'holding_back'       => $this->auditResponse->holding_back,
-                'tried_before'       => $this->auditResponse->tried_before,
-                'automate_one_thing' => $this->auditResponse->automate_one_thing,
-            ]
-        );
+            // Step 2 — Pain Points
+            'manual_work'          => $this->auditResponse->manual_work_scale,
+            'data_entry_hours'     => $this->auditResponse->manual_data_entry_hours,
+            'lost_leads'           => $this->auditResponse->lost_leads,
+            'tech_not_delivering'  => $this->auditResponse->paying_no_results,
+
+            // Step 3 — Goals
+            'primary_goal'       => $this->auditResponse->primary_goal,
+            'success_description' => $this->auditResponse->success_vision,
+            'biggest_blocker'    => $this->auditResponse->holding_back,
+            'tried_before'       => $this->auditResponse->tried_before,
+            'automate_one_thing' => $this->auditResponse->automate_one_thing,
+        ]);
 
         if ($response->failed()) {
             Log::error('Scoring API error', [
