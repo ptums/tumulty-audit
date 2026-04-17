@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd opcache
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
-COPY docker/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisor/php-fpm.conf /etc/supervisor/conf.d/php-fpm.conf
+COPY docker/supervisor/laravel-worker.conf /etc/supervisor/conf.d/laravel-worker.conf
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
@@ -38,7 +39,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
     && mkdir -p /var/log/supervisor
 
 EXPOSE 9000
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
 
 # ============================================================
 # Stage 3: Nginx — serves static assets, proxies PHP to app
