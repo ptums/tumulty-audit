@@ -22,6 +22,11 @@ class ScoreAuditResponse implements ShouldQueue
     {
         $baseUrl = rtrim(env('API_BASE_URL', 'https://tumulty-score-api.peter-686.workers.dev'), '/');
 
+        Log::info('ScoreAuditResponse fired', [
+            'submission_id' => $this->auditResponse->id,
+            'api_base_url'  => $baseUrl,
+        ]);
+
         $response = Http::timeout(15)->post("{$baseUrl}/score", [
             // Step 1 — Team
             'team_size'       => $this->auditResponse->team_size,

@@ -9,6 +9,8 @@ services:
     volumes:
       - .:/var/www
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    environment:
+      API_BASE_URL: http://host.docker.internal:8787
     networks:
       - tumulty_audit
     depends_on:
