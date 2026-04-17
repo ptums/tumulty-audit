@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Mail\AuditReportMail;
 use App\Models\AuditResponse;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ScoreAuditResponse implements ShouldQueue
 {
@@ -69,5 +71,21 @@ class ScoreAuditResponse implements ShouldQueue
             'score_label'     => $result['label'] ?? null,
             'score_breakdown' => $result['breakdown'] ?? null,
         ]);
+
+        $this->sendReportEmail();
+    }
+
+    private function sendReportEmail(): void
+    {
+        try {
+            Mail::to($this->auditResponse->email)
+                ->send(new AuditReportMail($this->auditResponse));
+        } catch (\Throwable $e) {
+            Log::error('AuditReportMail failed', [
+                'submission_id' => $this->auditResponse->id,
+                'email'         => $this->auditResponse->email,
+                'error'         => $e->getMessage(),
+            ]);
+        }
     }
 }
