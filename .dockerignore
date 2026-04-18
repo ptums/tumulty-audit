@@ -5,3 +5,4 @@ node_modules
 public/hot
 public/build
 storage/logs/*.log
+bootstrap/cache/*.php
