@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-# Cache config from the mounted .env so all processes pick up runtime values.
+# Rebuild config cache from the mounted .env on every startup.
+php /var/www/artisan config:clear
 php /var/www/artisan config:cache
 
 exec "$@"
